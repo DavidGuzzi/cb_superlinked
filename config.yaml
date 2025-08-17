@@ -1,0 +1,11 @@
+framework:
+  name: "superlinked"
+  version: "10.0.0"
+
+resource:
+  embedding_model: "all-MiniLM-L6-v2"
+  max_memory_mb: 1024
+  
+logging:
+  level: "INFO"
+  suppress_warnings: true
