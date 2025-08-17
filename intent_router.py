@@ -13,6 +13,7 @@ class IntentType(Enum):
     GREETING = "greeting"
     COUNT_QUERY = "count_query" 
     DATA_INFO = "data_info"
+    STORE_ID_QUERY = "store_id_query"
     UNKNOWN = "unknown"
 
 @dataclass
@@ -66,6 +67,19 @@ class IntentRouter:
                 keywords=["qué datos", "qué información", "datos", "información", "tenemos", "disponibles"],
                 handler="handle_data_info",
                 priority=1
+            ),
+            
+            # CONSULTAS POR ID DE TIENDA - Prioridad alta
+            Intent(
+                type=IntentType.STORE_ID_QUERY,
+                patterns=[
+                    r".*T_(Control|Experimento_[ABC])_\d{3}.*",
+                    r".*(tienda|store).*id.*",
+                    r".*datos.*de.*T_.*"
+                ],
+                keywords=["T_Control", "T_Experimento", "tienda id", "store id"],
+                handler="handle_store_id_query",
+                priority=3
             ),
         ]
     
