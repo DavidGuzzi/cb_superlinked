@@ -51,31 +51,49 @@ class ABTestingQueryEngine:
                           filters: Optional[Dict] = None) -> List[Dict]:
         """Obtiene las tiendas con mejor/peor performance en una métrica específica"""
         
-        # Obtener TODOS los resultados primero
-        query = Query(self.index)
+        # Usar directamente el data processor para evitar problemas con Superlinked
+        from data_processing import ABTestingDataProcessor
+        
+        # Acceder a los datos directamente desde el data processor
+        # Esto es una referencia temporal - necesitamos acceso al data processor
+        # Por ahora, crear una instancia nueva
+        data_processor = ABTestingDataProcessor()
+        data = data_processor.data.copy()
         
         # Aplicar filtros si se proporcionan
         if filters:
-            query = self._apply_filters(query, filters)
-        
-        # Obtener todos los registros (usar límite alto)
-        limited_query = query.limit(1000)
-        results = self.app.query(limited_query)
-        formatted_results = self._format_results(results)
+            for field_name, value in filters.items():
+                if field_name in data.columns:
+                    data = data[data[field_name] == value]
         
         # Ordenar por la métrica especificada
         reverse_order = (order.lower() == 'desc')
         
         try:
-            sorted_results = sorted(
-                formatted_results, 
-                key=lambda x: float(x.get(metric, 0)), 
-                reverse=reverse_order
-            )
-            return sorted_results[:limit]
-        except (ValueError, TypeError):
-            # Si hay error en conversión, retornar resultados sin ordenar
-            return formatted_results[:limit]
+            # Ordenar datos
+            sorted_data = data.sort_values(by=metric, ascending=not reverse_order)
+            
+            # Convertir a formato de resultados
+            results = []
+            for _, row in sorted_data.head(limit).iterrows():
+                result = {
+                    'tienda_id': row['tienda_id'],
+                    'experimento': row['experimento'],
+                    'region': row['region'],
+                    'tipo_tienda': row['tipo_tienda'],
+                    'usuarios': int(row['usuarios']),
+                    'conversiones': int(row['conversiones']),
+                    'revenue': float(row['revenue']),
+                    'conversion_rate': float(row['conversion_rate']),
+                    'description': f"Tienda {row['tienda_id']} en {row['region']} ({row['tipo_tienda']}) - {row['experimento']}: {row['conversion_rate']:.2f}% conversión, ${row['revenue']:.2f} revenue"
+                }
+                results.append(result)
+            
+            return results
+            
+        except Exception as e:
+            print(f"Error en get_top_performers: {e}")
+            return []
     
     def weighted_search(self,
                        query_text: str,
