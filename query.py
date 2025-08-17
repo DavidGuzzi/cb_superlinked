@@ -59,7 +59,8 @@ class ABTestingQueryEngine:
             query = self._apply_filters(query, filters)
         
         # Obtener todos los registros (usar límite alto)
-        results = self.app.query(query.limit(1000))
+        limited_query = query.limit(1000)
+        results = self.app.query(limited_query)
         formatted_results = self._format_results(results)
         
         # Ordenar por la métrica especificada
