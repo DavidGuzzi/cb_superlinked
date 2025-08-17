@@ -163,6 +163,35 @@ class IntentRouter:
 • Total conversiones: {summary['total_conversions']:,}
 • Revenue total: ${summary['total_revenue']:,.2f}"""
     
+    def handle_store_id_query(self, query: str, intent: Intent) -> str:
+        """Handler para consultas específicas por ID de tienda"""
+        import re
+        
+        # Extraer ID de tienda de la consulta
+        store_id_pattern = r"T_(Control|Experimento_[ABC])_\d{3}"
+        match = re.search(store_id_pattern, query)
+        
+        if match:
+            store_id = match.group(0)
+            
+            # Buscar en los datos
+            store_data = self.data_processor.data[self.data_processor.data['tienda_id'] == store_id]
+            
+            if not store_data.empty:
+                row = store_data.iloc[0]
+                return f"""Datos de la tienda {store_id}:
+• Experimento: {row['experimento']}
+• Región: {row['region']}
+• Tipo de tienda: {row['tipo_tienda']}
+• Usuarios: {row['usuarios']:,}
+• Conversiones: {row['conversiones']:,}
+• Revenue: ${row['revenue']:,.2f}
+• Conversion Rate: {row['conversion_rate']:.2f}%"""
+            else:
+                return f"No se encontraron datos para la tienda {store_id}."
+        
+        return None  # No se encontró ID válido, delegar a OpenAI
+    
     def handle_unknown(self, query: str, intent: Intent) -> None:
         """Handler para intents desconocidos - delegar a OpenAI"""
         return None
